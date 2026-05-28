@@ -42,7 +42,7 @@ const HABITS = {
 const CONSULT_IDS = ["c1_start","c1_end","c1_notes","c2_start","c2_end","c2_notes","c3_start","c3_end","c3_notes"];
 
 const SECTIONS = {
-  morning: { label: "Утро", icon: "✨", color: "#7ec8e3" },
+  morning: { label: "Утро", icon: "🦋", color: "#42a5f5" },
   day:     { label: "День", icon: "☀️",  color: "#ef6c00" },
   evening: { label: "Вечер", icon: "🌌", color: "#7b1fa2" },
 };
@@ -52,10 +52,10 @@ const MAXIM_MARKERS = [
   { id: "boundary",  emoji: "🛡️", label: "Удержала границу",        type: "happy" },
   { id: "took_care", emoji: "💛", label: "Позаботилась о себе",      type: "happy" },
   { id: "felt_good", emoji: "✨", label: "Было хорошо между нами",   type: "happy" },
-  { id: "no_contact",emoji: "🌸", label: "Не виделись сегодня",      type: "neutral" },
+  { id: "no_contact",emoji: "🤍", label: "Не виделись сегодня",      type: "neutral" },
+  { id: "fight",     emoji: "🌩️", label: "В ссоре",                  type: "neutral2" },
   { id: "felt_anxiety",emoji:"😶\u200d🌫️",label:"Почувствовала тревогу",  type: "sad" },
   { id: "yielded",   emoji: "🌊", label: "Уступила себе в ущерб",    type: "sad" },
-  { id: "fight",     emoji: "🌩️", label: "В ссоре",                  type: "sad" },
 ];
 
 const ENERGY_MSGS = [
@@ -644,14 +644,14 @@ export default function App() {
             </div>
 
             {/* two columns */}
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px", marginBottom:"12px" }}>
+            <div style={{ display:"flex", flexDirection:"column", gap:"10px", marginBottom:"12px" }}>
 
               {/* happy */}
               <div style={{ background:"rgba(255,255,255,0.8)", borderRadius:"18px", padding:"16px", border:"2px solid rgba(76,175,80,0.2)" }}>
                 <div style={{ fontSize:"20px", marginBottom:"8px", textAlign:"center" }}>😊</div>
                 <div style={{ fontSize:"11px", color:"#2e7d32", fontWeight:700, textAlign:"center", marginBottom:"10px", textTransform:"uppercase", letterSpacing:"1px" }}>Хорошее</div>
                 <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
-                  {MAXIM_MARKERS.filter(m => m.type==="happy" || m.type==="neutral").map(m => (
+                  {MAXIM_MARKERS.filter(m => m.type==="happy").map(m => (
                     <div key={m.id} onClick={() => toggleMaxim(m.id)}
                       style={{ display:"flex", alignItems:"center", gap:"8px", padding:"8px 10px", borderRadius:"10px", cursor:"pointer", transition:"all 0.15s",
                         background: maximMarkers[m.id] ? "rgba(76,175,80,0.12)" : "rgba(245,255,245,0.8)",
@@ -707,13 +707,92 @@ export default function App() {
               </div>
             </div>
 
-            {/* general note */}
+            {/* neutral marker */}
+            {MAXIM_MARKERS.filter(m => m.type==="neutral").map(m => (
+              <div key={m.id} onClick={() => toggleMaxim(m.id)}
+                style={{ display:"flex", alignItems:"center", gap:"12px", padding:"12px 16px", borderRadius:"14px", cursor:"pointer", marginBottom:"8px",
+                  background: maximMarkers[m.id] ? "rgba(158,158,158,0.15)" : "rgba(255,255,255,0.8)",
+                  border: `2px solid ${maximMarkers[m.id] ? "#9e9e9e" : "rgba(200,200,200,0.4)"}` }}>
+                <span style={{ fontSize:"18px" }}>{maximMarkers[m.id] ? "✓" : m.emoji}</span>
+                <span style={{ fontSize:"14px", fontWeight:700, color:"#666" }}>{m.label}</span>
+              </div>
+            ))}
+            {MAXIM_MARKERS.filter(m => m.type==="neutral2").map(m => (
+              <div key={m.id} onClick={() => toggleMaxim(m.id)}
+                style={{ display:"flex", alignItems:"center", gap:"12px", padding:"12px 16px", borderRadius:"14px", cursor:"pointer", marginBottom:"12px",
+                  background: maximMarkers[m.id] ? "rgba(211,47,47,0.08)" : "rgba(255,255,255,0.8)",
+                  border: `2px solid ${maximMarkers[m.id] ? "#d32f2f" : "rgba(200,200,200,0.4)"}` }}>
+                <span style={{ fontSize:"18px" }}>{maximMarkers[m.id] ? "✓" : m.emoji}</span>
+                <span style={{ fontSize:"14px", fontWeight:700, color: maximMarkers[m.id] ? "#b71c1c" : "#666" }}>{m.label}</span>
+              </div>
+            ))}
             <div style={{ background:"rgba(255,255,255,0.8)", borderRadius:"18px", padding:"18px", border:"2px solid rgba(194,24,91,0.1)" }}>
               <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"15px", color:"#6d2b5e", marginBottom:"6px", fontWeight:700 }}>📝 Что хочу запомнить</div>
               <textarea value={maximNote} onChange={e => { setMaximNote(e.target.value); save({ maximNote:e.target.value }); }}
                 placeholder="Сегодня я заметила..." rows={3}
                 style={{ width:"100%", border:"1.5px solid rgba(194,24,91,0.2)", borderRadius:"12px", padding:"11px 13px", fontSize:"13px", color:"#4a1a6e", background:"rgba(255,250,255,0.9)", resize:"none", lineHeight:1.6 }} />
             </div>
+
+            {/* статистика за месяц */}
+            {(() => {
+              const keys = [];
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith("selfcare_")) keys.push(k.replace("selfcare_", ""));
+              }
+              keys.sort((a, b) => b.localeCompare(a)).splice(30);
+              if (keys.length === 0) return null;
+              return (
+                <div style={{ background:"rgba(255,255,255,0.8)", borderRadius:"18px", padding:"18px", border:"2px solid rgba(194,24,91,0.1)", marginTop:"12px" }}>
+                  <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"15px", color:"#6d2b5e", marginBottom:"14px", fontWeight:700 }}>📅 Статистика за месяц</div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+                    {keys.map(dateKey => {
+                      const data = JSON.parse(localStorage.getItem("selfcare_" + dateKey) || "{}");
+                      const mm = data.maximMarkers || {};
+                      const happy = MAXIM_MARKERS.filter(m => m.type==="happy" && mm[m.id]).length + (data.customHappy?.length || 0);
+                      const sad = MAXIM_MARKERS.filter(m => m.type==="sad" && mm[m.id]).length + (data.customSad?.length || 0);
+                      const noContact = mm["no_contact"];
+                      const fight = mm["fight"];
+                      const [y, mo, d] = dateKey.split("-").map(Number);
+                      const label = new Date(y, mo-1, d).toLocaleDateString("ru-RU", { day:"numeric", month:"short" });
+                      return (
+                        <div key={dateKey} style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                          <span style={{ fontSize:"12px", color:"#9c5080", minWidth:"52px" }}>{label}</span>
+                          <div style={{ display:"flex", gap:"6px", alignItems:"center" }}>
+                            {happy > 0 && <span style={{ fontSize:"13px", fontWeight:700, color:"#2e7d32" }}>😊{happy}</span>}
+                            {sad > 0 && <span style={{ fontSize:"13px", fontWeight:700, color:"#b71c1c" }}>😢{sad}</span>}
+                            {noContact && <span style={{ fontSize:"16px" }}>🤍</span>}
+                            {fight && <span style={{ fontSize:"16px" }}>🌩️</span>}
+                            {!happy && !sad && !noContact && !fight && <span style={{ fontSize:"12px", color:"#ccc" }}>—</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* итог */}
+                  {(() => {
+                    let totalHappy = 0, totalSad = 0, totalNoContact = 0, totalFight = 0;
+                    keys.forEach(dateKey => {
+                      const data = JSON.parse(localStorage.getItem("selfcare_" + dateKey) || "{}");
+                      const mm = data.maximMarkers || {};
+                      totalHappy += MAXIM_MARKERS.filter(m => m.type==="happy" && mm[m.id]).length + (data.customHappy?.length || 0);
+                      totalSad += MAXIM_MARKERS.filter(m => m.type==="sad" && mm[m.id]).length + (data.customSad?.length || 0);
+                      if (mm["no_contact"]) totalNoContact++;
+                      if (mm["fight"]) totalFight++;
+                    });
+                    return (
+                      <div style={{ marginTop:"14px", paddingTop:"12px", borderTop:"1.5px solid rgba(194,24,91,0.15)", display:"flex", gap:"12px", flexWrap:"wrap" }}>
+                        {totalHappy > 0 && <div style={{ textAlign:"center" }}><div style={{ fontSize:"20px" }}>😊</div><div style={{ fontSize:"16px", fontWeight:900, color:"#2e7d32" }}>{totalHappy}</div><div style={{ fontSize:"10px", color:"#4caf50" }}>хорошего</div></div>}
+                        {totalSad > 0 && <div style={{ textAlign:"center" }}><div style={{ fontSize:"20px" }}>😢</div><div style={{ fontSize:"16px", fontWeight:900, color:"#b71c1c" }}>{totalSad}</div><div style={{ fontSize:"10px", color:"#d32f2f" }}>тяжёлого</div></div>}
+                        {totalNoContact > 0 && <div style={{ textAlign:"center" }}><div style={{ fontSize:"20px" }}>🤍</div><div style={{ fontSize:"16px", fontWeight:900, color:"#888" }}>{totalNoContact}</div><div style={{ fontSize:"10px", color:"#aaa" }}>не виделись</div></div>}
+                        {totalFight > 0 && <div style={{ textAlign:"center" }}><div style={{ fontSize:"20px" }}>🌩️</div><div style={{ fontSize:"16px", fontWeight:900, color:"#b71c1c" }}>{totalFight}</div><div style={{ fontSize:"10px", color:"#d32f2f" }}>в ссоре</div></div>}
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
           </div>
         )}
 
