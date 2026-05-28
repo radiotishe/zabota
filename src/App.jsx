@@ -294,8 +294,15 @@ export default function App() {
       setChecked(nc); setCancelled(ncan);
       save({ checked: nc, cancelled: ncan });
     } else {
-      setNudge(habit);
+      const next = { ...checked, [habit.id]: true };
+      setChecked(next);
+      save({ checked: next });
     }
+  };
+
+  const openNudge = (e, habit) => {
+    e.stopPropagation();
+    setNudge(habit);
   };
 
   const confirmNudge = () => {
@@ -497,7 +504,7 @@ export default function App() {
                     <div style={{ fontSize:"11px", color:"#b06090", marginTop:"2px" }}>+{habit.energy}% энергии</div>
                   </div>
                   {!checked[habit.id] && !cancelled[habit.id] && (
-                    <div style={{ fontSize:"11px", color:"#e91e8c", fontWeight:700, background:"rgba(233,30,140,0.1)", padding:"3px 10px", borderRadius:"50px", whiteSpace:"nowrap" }}>уговори меня</div>
+                    <div onClick={e => openNudge(e, habit)} style={{ fontSize:"11px", color:"#e91e8c", fontWeight:700, background:"rgba(233,30,140,0.1)", padding:"3px 10px", borderRadius:"50px", whiteSpace:"nowrap", cursor:"pointer" }}>уговори меня</div>
                   )}
                 </div>
               ))}
