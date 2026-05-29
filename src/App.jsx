@@ -229,14 +229,31 @@ export default function App() {
           if (s.maximSadNote !== undefined)   setMaximSadNote(s.maximSadNote);
           if (s.customHappy)  setCustomHappy(s.customHappy);
           if (s.customSad)    setCustomSad(s.customSad);
+        } else {
+          // New day — load yesterday's "tomorrow" tasks as today's tasks
+          const yesterday = localDateKey(-1);
+          try {
+            const yraw = localStorage.getItem("selfcare_" + yesterday);
+            if (yraw) {
+              const y = JSON.parse(yraw);
+              // yesterday's tomorrow tasks become today
+              const tmrKey = "selfcare_tmr_tasks";
+              const tmrRaw = localStorage.getItem(tmrKey);
+              if (tmrRaw) {
+                const tmr = JSON.parse(tmrRaw);
+                if (tmr.bigTask !== undefined) setBigTask(tmr.bigTask);
+                if (tmr.smallTasks) setSmallTasks(tmr.smallTasks);
+              }
+            }
+          } catch {}
         }
-        // If dateKey is missing or different — fresh day, load nothing
       }
     } catch {}
 
     // Load tomorrow planned tasks
     try {
-      const t = JSON.parse(localStorage.getItem("selfcare_" + TOMORROW) || "{}");
+      const tmrKey = "selfcare_tmr_tasks";
+      const t = JSON.parse(localStorage.getItem(tmrKey) || "{}");
       if (t.bigTask !== undefined) setTmrBig(t.bigTask);
       if (t.smallTasks)            setTmrSmall(t.smallTasks);
     } catch {}
@@ -264,8 +281,8 @@ export default function App() {
   };
 
   const saveTmr = (patch) => {
-    const cur = JSON.parse(localStorage.getItem("selfcare_" + TOMORROW) || "{}");
-    localStorage.setItem("selfcare_" + TOMORROW, JSON.stringify({ ...cur, ...patch }));
+    const cur = JSON.parse(localStorage.getItem("selfcare_tmr_tasks") || "{}");
+    localStorage.setItem("selfcare_tmr_tasks", JSON.stringify({ ...cur, ...patch }));
   };
 
   const saveBank = (next) => localStorage.setItem("task_bank", JSON.stringify(next));
@@ -327,6 +344,8 @@ export default function App() {
 
   const addToBank = () => {
     if (!bankInput.trim()) return;
+    const undone = taskBank.filter(t => !t.done);
+    if (undone.length >= 5) return;
     const next = [...taskBank, { id: Date.now(), text: bankInput.trim(), done: false }];
     setTaskBank(next); setBankInput(""); saveBank(next);
   };
@@ -677,7 +696,7 @@ export default function App() {
                 ))}
                 {customHappy.length < 10 && (
                   <div style={{ display:"flex", gap:"6px", marginTop:"4px" }}>
-                    <input value={happyInput} onChange={e=>setHappyInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&happyInput.trim()){const n=[...customHappy,happyInput.trim()];setCustomHappy(n);save({customHappy:n});setHappyInput("");}}} placeholder="Добавить..." style={{ flex:1, border:"1.5px solid rgba(76,175,80,0.3)", borderRadius:"8px", padding:"6px 10px", fontSize:"12px", color:"#2e7d32", background:"rgba(245,255,245,0.9)" }} />
+                    <input value={happyInput} onChange={e=>setHappyInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&happyInput.trim()){const n=[...customHappy,happyInput.trim()];setCustomHappy(n);save({customHappy:n});setHappyInput("");}}} placeholder="Добавить..." style={{ width:"0", flex:1, minWidth:0, border:"1.5px solid rgba(76,175,80,0.3)", borderRadius:"8px", padding:"6px 8px", fontSize:"12px", color:"#2e7d32", background:"rgba(245,255,245,0.9)" }} />
                     <button onClick={()=>{if(happyInput.trim()){const n=[...customHappy,happyInput.trim()];setCustomHappy(n);save({customHappy:n});setHappyInput("");}}} style={{ background:"rgba(76,175,80,0.15)", border:"1.5px solid rgba(76,175,80,0.3)", borderRadius:"8px", width:"30px", color:"#2e7d32", fontSize:"18px", cursor:"pointer", flexShrink:0 }}>+</button>
                   </div>
                 )}
@@ -707,7 +726,7 @@ export default function App() {
                 ))}
                 {customSad.length < 10 && (
                   <div style={{ display:"flex", gap:"6px", marginTop:"4px" }}>
-                    <input value={sadInput} onChange={e=>setSadInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&sadInput.trim()){const n=[...customSad,sadInput.trim()];setCustomSad(n);save({customSad:n});setSadInput("");}}} placeholder="Добавить..." style={{ flex:1, border:"1.5px solid rgba(211,47,47,0.3)", borderRadius:"8px", padding:"6px 10px", fontSize:"12px", color:"#b71c1c", background:"rgba(255,250,250,0.9)" }} />
+                    <input value={sadInput} onChange={e=>setSadInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&sadInput.trim()){const n=[...customSad,sadInput.trim()];setCustomSad(n);save({customSad:n});setSadInput("");}}} placeholder="Добавить..." style={{ width:"0", flex:1, minWidth:0, border:"1.5px solid rgba(211,47,47,0.3)", borderRadius:"8px", padding:"6px 8px", fontSize:"12px", color:"#b71c1c", background:"rgba(255,250,250,0.9)" }} />
                     <button onClick={()=>{if(sadInput.trim()){const n=[...customSad,sadInput.trim()];setCustomSad(n);save({customSad:n});setSadInput("");}}} style={{ background:"rgba(211,47,47,0.1)", border:"1.5px solid rgba(211,47,47,0.3)", borderRadius:"8px", width:"30px", color:"#d32f2f", fontSize:"18px", cursor:"pointer", flexShrink:0 }}>+</button>
                   </div>
                 )}
