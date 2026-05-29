@@ -415,6 +415,12 @@ export default function App() {
       {nudge && <NudgeModal habit={nudge} onConfirm={confirmNudge} onCancel={() => setNudge(null)} onCancelled={confirmCancelled} isConsult={CONSULT_IDS.includes(nudge.id)} />}
       {showHistory && <HistoryView onClose={() => setShowHistory(false)} />}
 
+      {/* кнопка наверх — на всех страницах */}
+      <button onClick={() => window.scrollTo({top:0, behavior:"smooth"})}
+        style={{ position:"fixed", top:"75%", right:"4px", transform:"translateY(-50%)", background:"none", border:"none", color:"#f5eef5", fontSize:"24px", cursor:"pointer", zIndex:50, padding:"8px" }}>
+        ↑
+      </button>
+
       {/* ── HEADER ── */}
       <div style={{ textAlign:"center", padding:"36px 20px 22px", background:"linear-gradient(135deg,#fce4ec,#f3e5f5)", borderBottom:"1.5px solid rgba(233,160,199,0.3)" }}>
 
@@ -602,9 +608,8 @@ export default function App() {
               <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"16px", color:"#1a237e", marginBottom:"4px", fontWeight:700 }}>📋 Банк задач</div>
               <p style={{ fontSize:"12px", color:"#5c6bc0", marginBottom:"12px", fontStyle:"italic" }}>Всё что висит и ждёт — сюда 🌿</p>
               <div style={{ display:"flex", gap:"8px", marginBottom:taskBank.length?"12px":"0" }}>
-                <input value={bankInput} onChange={e => setBankInput(e.target.value)} onKeyDown={e => e.key==="Enter" && addToBank()} placeholder="Добавить задачу..."
-                  style={{ flex:1, border:"1.5px solid rgba(33,150,243,0.3)", borderRadius:"10px", padding:"9px 12px", fontSize:"13px", color:"#1a237e", background:"rgba(255,250,255,0.9)" }} />
-                <button onClick={addToBank} style={{ background:"linear-gradient(135deg,#1565c0,#673ab7)", border:"none", borderRadius:"10px", width:"38px", color:"#fff", fontSize:"18px", cursor:"pointer", flexShrink:0 }}>+</button>
+                <input value={bankInput} onChange={e => setBankInput(e.target.value)} onKeyDown={e => { if(e.key==="Enter") { addToBank(); } }} placeholder="Добавить задачу и нажать Enter..."
+                  style={{ width:"100%", border:"1.5px solid rgba(33,150,243,0.3)", borderRadius:"10px", padding:"9px 12px", fontSize:"16px", color:"#1a237e", background:"rgba(255,250,255,0.9)" }} />
               </div>
               {taskBank.length > 0 && (
                 <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
@@ -694,10 +699,9 @@ export default function App() {
                     <button onClick={() => { const n=customHappy.filter((_,j)=>j!==i); setCustomHappy(n); save({customHappy:n}); }} style={{ background:"none", border:"none", color:"#4caf50", cursor:"pointer", fontSize:"16px", lineHeight:1 }}>×</button>
                   </div>
                 ))}
-                {customHappy.length < 10 && (
-                  <div style={{ display:"flex", gap:"6px", marginTop:"4px" }}>
-                    <input value={happyInput} onChange={e=>setHappyInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&happyInput.trim()){const n=[...customHappy,happyInput.trim()];setCustomHappy(n);save({customHappy:n});setHappyInput("");}}} placeholder="Добавить..." style={{ width:"0", flex:1, minWidth:0, border:"1.5px solid rgba(76,175,80,0.3)", borderRadius:"8px", padding:"6px 8px", fontSize:"12px", color:"#2e7d32", background:"rgba(245,255,245,0.9)" }} />
-                    <button onClick={()=>{if(happyInput.trim()){const n=[...customHappy,happyInput.trim()];setCustomHappy(n);save({customHappy:n});setHappyInput("");}}} style={{ background:"rgba(76,175,80,0.15)", border:"1.5px solid rgba(76,175,80,0.3)", borderRadius:"8px", width:"30px", color:"#2e7d32", fontSize:"18px", cursor:"pointer", flexShrink:0 }}>+</button>
+                {customHappy.length < 5 && (
+                  <div style={{ marginTop:"4px" }}>
+                    <input value={happyInput} onChange={e=>setHappyInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&happyInput.trim()){const n=[...customHappy,happyInput.trim()];setCustomHappy(n);save({customHappy:n});setHappyInput("");}}} placeholder="Добавить и нажать Enter..." style={{ width:"100%", border:"1.5px solid rgba(76,175,80,0.3)", borderRadius:"8px", padding:"6px 10px", fontSize:"16px", color:"#2e7d32", background:"rgba(245,255,245,0.9)" }} />
                   </div>
                 )}
               </div>
@@ -724,10 +728,9 @@ export default function App() {
                     <button onClick={() => { const n=customSad.filter((_,j)=>j!==i); setCustomSad(n); save({customSad:n}); }} style={{ background:"none", border:"none", color:"#d32f2f", cursor:"pointer", fontSize:"16px", lineHeight:1 }}>×</button>
                   </div>
                 ))}
-                {customSad.length < 10 && (
-                  <div style={{ display:"flex", gap:"6px", marginTop:"4px" }}>
-                    <input value={sadInput} onChange={e=>setSadInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&sadInput.trim()){const n=[...customSad,sadInput.trim()];setCustomSad(n);save({customSad:n});setSadInput("");}}} placeholder="Добавить..." style={{ width:"0", flex:1, minWidth:0, border:"1.5px solid rgba(211,47,47,0.3)", borderRadius:"8px", padding:"6px 8px", fontSize:"12px", color:"#b71c1c", background:"rgba(255,250,250,0.9)" }} />
-                    <button onClick={()=>{if(sadInput.trim()){const n=[...customSad,sadInput.trim()];setCustomSad(n);save({customSad:n});setSadInput("");}}} style={{ background:"rgba(211,47,47,0.1)", border:"1.5px solid rgba(211,47,47,0.3)", borderRadius:"8px", width:"30px", color:"#d32f2f", fontSize:"18px", cursor:"pointer", flexShrink:0 }}>+</button>
+                {customSad.length < 5 && (
+                  <div style={{ marginTop:"4px" }}>
+                    <input value={sadInput} onChange={e=>setSadInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&sadInput.trim()){const n=[...customSad,sadInput.trim()];setCustomSad(n);save({customSad:n});setSadInput("");}}} placeholder="Добавить и нажать Enter..." style={{ width:"100%", border:"1.5px solid rgba(211,47,47,0.3)", borderRadius:"8px", padding:"6px 10px", fontSize:"16px", color:"#b71c1c", background:"rgba(255,250,250,0.9)" }} />
                   </div>
                 )}
               </div>
