@@ -1,5 +1,17 @@
 import { useState, useEffect } from "react";
 
+// ── CARE PROCEDURES ──────────────────────────────────────────────────────────
+
+const CARE_PROCEDURES = [
+  { id: "botox",     emoji: "💉", name: "Ботокс",            days: 90 },
+  { id: "laser",     emoji: "✨", name: "Лазерная эпиляция", days: 60 },
+  { id: "period",    emoji: "🌸", name: "Месячные",          days: 28 },
+  { id: "manicure",  emoji: "💅", name: "Маникюр",           days: 14 },
+  { id: "pedicure",  emoji: "🦶", name: "Педикюр",           days: 42 },
+  { id: "massage",   emoji: "💆‍♀️", name: "Массаж",          days: 7  },
+  { id: "yoga_care", emoji: "🧘‍♀️", name: "Йога",           days: 1  },
+];
+
 // ── DATA ────────────────────────────────────────────────────────────────────
 
 const HABITS = {
@@ -200,6 +212,9 @@ export default function App() {
   const [showHistory, setShowHistory]   = useState(false);
   const [bankInput, setBankInput]       = useState("");
   const [taskBank, setTaskBank]         = useState([]);
+  const [careDates, setCareDates]       = useState({});
+  const [showPastCare, setShowPastCare] = useState(false);
+  const [pastInputs, setPastInputs]     = useState({});
   const [customHappy, setCustomHappy]   = useState([]);
   const [customSad, setCustomSad]       = useState([]);
   const [happyInput, setHappyInput]     = useState("");
@@ -262,6 +277,12 @@ export default function App() {
     try {
       const b = JSON.parse(localStorage.getItem("task_bank") || "[]");
       setTaskBank(b);
+    } catch {}
+
+    // Care dates (persistent)
+    try {
+      const cd = JSON.parse(localStorage.getItem("care_dates") || "{}");
+      setCareDates(cd);
     } catch {}
 
     // Cycle (persistent)
@@ -466,49 +487,49 @@ export default function App() {
           </div>
         </div>
 
-        <button onClick={() => setShowHistory(true)} style={{ marginTop:"14px", background:"rgba(255,255,255,0.6)", border:"1.5px solid rgba(220,180,220,0.5)", borderRadius:"50px", padding:"7px 18px", color:"#9c5080", fontSize:"13px", fontWeight:700, cursor:"pointer" }}>
-          История
+        <button onClick={() => setTab("today")} style={{ marginTop:"14px", background: tab==="today" ? "linear-gradient(135deg,#e91e8c,#9c27b0)" : "rgba(255,255,255,0.6)", border:"1.5px solid rgba(220,180,220,0.5)", borderRadius:"50px", padding:"10px 32px", color: tab==="today" ? "#fff" : "#9c5080", fontSize:"15px", fontWeight:700, cursor:"pointer", boxShadow: tab==="today" ? "0 4px 16px rgba(233,30,140,0.3)" : "none" }}>
+          🌸 Сегодня
         </button>
       </div>
 
       {/* ── BODY ── */}
       <div style={{ maxWidth:"620px", margin:"0 auto", padding:"24px 16px 120px" }}>
 
-        {/* main tabs */}
+        {/* secondary tabs */}
         <div style={{ display:"flex", gap:"8px", marginBottom:"24px", justifyContent:"center", flexWrap:"wrap" }}>
-          <button onClick={() => setTab("today")}    style={TAB(tab==="today",    "#e91e8c")}>🌸 Сегодня</button>
           <button onClick={() => setTab("tomorrow")} style={TAB(tab==="tomorrow", "#7b2d9e")}>🌙 Завтра</button>
           <button onClick={() => setTab("maxim")}    style={TAB(tab==="maxim",    "#c2185b")}>💛 Максим</button>
+          <button onClick={() => setTab("care")}     style={TAB(tab==="care",     "#26a69a")}>💅 Уход</button>
         </div>
 
         {/* ══════════════ TODAY ══════════════ */}
         {tab === "today" && (
           <>
-            {/* day-off toggle */}
-            <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"18px", background:"rgba(255,255,255,0.7)", borderRadius:"16px", padding:"13px 18px", border:"1.5px solid rgba(220,180,220,0.35)" }}>
-              <span style={{ fontSize:"14px", color:"#6d2b5e", fontWeight:700, flex:1 }}>🏖️ Сегодня у меня выходной</span>
-              <div onClick={() => { setIsOff(!isOff); save({ isOff: !isOff }); }}
-                style={{ width:"48px", height:"26px", borderRadius:"50px", cursor:"pointer", transition:"background 0.3s", background:isOff?"linear-gradient(135deg,#e91e8c,#9c27b0)":"rgba(220,180,210,0.4)", position:"relative" }}>
-                <div style={{ position:"absolute", top:"3px", left:isOff?"24px":"3px", width:"20px", height:"20px", borderRadius:"50%", background:"#fff", transition:"left 0.3s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }} />
-              </div>
-            </div>
-
             {/* section tabs */}
-            <div style={{ display:"flex", gap:"8px", marginBottom:"18px", justifyContent:"center" }}>
+            <div style={{ display:"flex", gap:"0", background:"rgba(255,255,255,0.6)", borderRadius:"16px", overflow:"hidden", border:"1.5px solid rgba(220,180,220,0.3)", marginBottom:"18px" }}>
               {Object.entries(SECTIONS).map(([key, s]) => (
                 <button key={key} onClick={() => setSection(key)} style={{
-                  padding:"9px 14px", borderRadius:"50px", border:"2px solid",
-                  borderColor: section===key ? s.color : "rgba(180,120,180,0.25)",
-                  background: section===key ? s.color : "rgba(255,255,255,0.7)",
-                  color: section===key ? "#fff" : "#9c5080",
-                  fontWeight:700, fontSize:"13px", cursor:"pointer", transition:"all 0.2s",
+                  flex:1, textAlign:"center", padding:"11px 8px", borderBottom:`3px solid ${section===key ? s.color : "transparent"}`,
+                  color: section===key ? s.color : "#9c5080",
+                  fontWeight: section===key ? 700 : 400, fontSize:"13px", cursor:"pointer",
+                  background:"transparent", border:"none", borderBottom:`3px solid ${section===key ? s.color : "transparent"}`,
+                  transition:"all 0.2s",
                 }}>
-                  {s.icon} {s.label} <span style={{ fontSize:"11px", opacity:0.85 }}>{visHabits(key).filter(h => checked[h.id]).length}/{visHabits(key).length}</span>
+                  <div style={{ fontSize:"18px" }}>{s.icon}</div>
+                  <div>{s.label} <span style={{ fontSize:"10px", opacity:0.7 }}>{visHabits(key).filter(h => checked[h.id]).length}/{visHabits(key).length}</span></div>
                 </button>
               ))}
             </div>
 
-            {/* habit tiles */}
+              {section === "day" && (
+                <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"12px", background:"rgba(255,255,255,0.7)", borderRadius:"16px", padding:"11px 16px", border:"1.5px solid rgba(220,180,220,0.35)" }}>
+                  <span style={{ fontSize:"13px", color:"#6d2b5e", fontWeight:700, flex:1 }}>🏖️ Сегодня выходной</span>
+                  <div onClick={() => { setIsOff(!isOff); save({ isOff: !isOff }); }}
+                    style={{ width:"44px", height:"24px", borderRadius:"50px", cursor:"pointer", transition:"background 0.3s", background:isOff?"linear-gradient(135deg,#e91e8c,#9c27b0)":"rgba(220,180,210,0.4)", position:"relative", flexShrink:0 }}>
+                    <div style={{ position:"absolute", top:"3px", left:isOff?"22px":"3px", width:"18px", height:"18px", borderRadius:"50%", background:"#fff", transition:"left 0.3s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }} />
+                  </div>
+                </div>
+              )}
             <div style={{ display:"grid", gap:"10px", marginBottom:"26px" }}>
               {visHabits(section).map((habit, i) => (
                 <div key={habit.id} onClick={() => handleCheck(habit)} style={{
@@ -624,7 +645,11 @@ export default function App() {
               )}
             </div>
             {/* backup — скрыто внизу */}
-            <div style={{ marginTop:"32px", paddingTop:"16px", borderTop:"1px solid rgba(220,180,220,0.25)", display:"flex", gap:"8px", justifyContent:"center", opacity:0.45 }}>
+            <div style={{ marginTop:"32px", paddingTop:"16px", borderTop:"1px solid rgba(220,180,220,0.25)", display:"flex", gap:"8px", justifyContent:"center", opacity:0.45, flexWrap:"wrap" }}>
+              <button onClick={() => setShowHistory(true)} style={{ background:"none", border:"none", color:"#b06090", fontSize:"11px", cursor:"pointer" }}>
+                📖 История
+              </button>
+              <span style={{ color:"#d0aac0", fontSize:"11px" }}>·</span>
               <button onClick={exportData} style={{ background:"none", border:"none", color:"#b06090", fontSize:"11px", cursor:"pointer" }}>
                 💾 Скачать данные
               </button>
@@ -822,6 +847,74 @@ export default function App() {
                 </div>
               );
             })()}
+          </div>
+        )}
+
+        {/* ══════════════ CARE ══════════════ */}
+        {tab === "care" && (
+          <div style={{ animation:"fadeUp 0.3s both" }}>
+            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"20px", color:"#6d2b5e", fontWeight:700, textAlign:"center", marginBottom:"20px" }}>💅 Уход за собой</div>
+
+            <div style={{ display:"flex", flexDirection:"column", gap:"10px", marginBottom:"24px" }}>
+              {CARE_PROCEDURES.map(p => {
+                const lastDate = careDates[p.id];
+                const daysSince = lastDate ? Math.floor((new Date() - new Date(lastDate)) / 86400000) : null;
+                const urgent = daysSince !== null && daysSince >= p.days;
+                const soon = daysSince !== null && daysSince >= p.days * 0.85;
+                return (
+                  <div key={p.id} style={{ background:"rgba(255,255,255,0.85)", borderRadius:"18px", padding:"14px 16px", border:`2px solid ${urgent ? "rgba(211,47,47,0.3)" : soon ? "rgba(255,152,0,0.3)" : "rgba(220,180,220,0.3)"}`, display:"flex", alignItems:"center", gap:"12px" }}>
+                    <div style={{ fontSize:"26px", flexShrink:0 }}>{p.emoji}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:700, fontSize:"14px", color:"#5d3a5a" }}>{p.name}</div>
+                      <div style={{ fontSize:"11px", marginTop:"2px", color: daysSince === null ? "#b06090" : urgent ? "#d32f2f" : soon ? "#e65100" : "#2e7d32" }}>
+                        {daysSince === null ? "не указана дата" : urgent ? "⚠️ Пора! · " + daysSince + " дн. назад" : soon ? "🔔 Скоро · " + daysSince + " дн. назад" : "✓ " + daysSince + " дн. назад"}
+                      </div>
+                      {daysSince !== null && (
+                        <div style={{ marginTop:"5px", background:"rgba(220,180,220,0.2)", borderRadius:"50px", height:"4px", overflow:"hidden" }}>
+                          <div style={{ height:"100%", borderRadius:"50px", width:`${Math.min((daysSince/p.days)*100, 100)}%`, background: urgent ? "linear-gradient(90deg,#d32f2f,#e91e8c)" : soon ? "linear-gradient(90deg,#ff9800,#e91e8c)" : "linear-gradient(90deg,#42a5f5,#9c27b0)" }} />
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => {
+                      const next = { ...careDates, [p.id]: localDateKey() };
+                      setCareDates(next);
+                      localStorage.setItem("care_dates", JSON.stringify(next));
+                    }} style={{ background:"linear-gradient(135deg,#e91e8c,#9c27b0)", border:"none", borderRadius:"50px", padding:"9px 14px", color:"#fff", fontSize:"12px", fontWeight:700, cursor:"pointer", flexShrink:0 }}>
+                      Сегодня
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button onClick={() => setShowPastCare(!showPastCare)}
+              style={{ width:"100%", background:"rgba(255,255,255,0.6)", border:"1.5px dashed rgba(180,120,180,0.4)", borderRadius:"16px", padding:"12px", color:"#9c5080", fontSize:"13px", fontWeight:700, cursor:"pointer" }}>
+              {showPastCare ? "▲ Скрыть" : "📅 Внести прошлые даты"}
+            </button>
+
+            {showPastCare && (
+              <div style={{ background:"rgba(255,255,255,0.8)", borderRadius:"18px", padding:"18px", marginTop:"10px", border:"1.5px solid rgba(220,180,220,0.3)" }}>
+                <p style={{ fontSize:"12px", color:"#9c5080", marginBottom:"14px", fontStyle:"italic" }}>Когда в последний раз делала?</p>
+                {CARE_PROCEDURES.map(p => (
+                  <div key={p.id} style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"10px" }}>
+                    <span style={{ fontSize:"18px" }}>{p.emoji}</span>
+                    <span style={{ flex:1, fontSize:"13px", color:"#5d3a5a", fontWeight:700 }}>{p.name}</span>
+                    <input type="date" value={pastInputs[p.id] || careDates[p.id] || ""}
+                      onChange={e => setPastInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
+                      style={{ border:"1.5px solid rgba(220,180,220,0.4)", borderRadius:"10px", padding:"5px 8px", fontSize:"12px", color:"#6d2b5e", background:"rgba(255,250,255,0.9)" }} />
+                  </div>
+                ))}
+                <button onClick={() => {
+                  const next = { ...careDates, ...pastInputs };
+                  setCareDates(next);
+                  localStorage.setItem("care_dates", JSON.stringify(next));
+                  setShowPastCare(false);
+                  setPastInputs({});
+                }} style={{ marginTop:"8px", width:"100%", background:"linear-gradient(135deg,#e91e8c,#9c27b0)", border:"none", borderRadius:"12px", padding:"11px", color:"#fff", fontSize:"14px", fontWeight:700, cursor:"pointer" }}>
+                  Сохранить 💾
+                </button>
+              </div>
+            )}
           </div>
         )}
 
