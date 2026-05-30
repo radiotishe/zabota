@@ -62,14 +62,13 @@ const SECTIONS = {
 };
 
 const MAXIM_MARKERS = [
-  { id: "was_myself", emoji: "👑", label: "Была собой",              type: "happy" },
-  { id: "boundary",  emoji: "🛡️", label: "Удержала границу",        type: "happy" },
-  { id: "took_care", emoji: "💛", label: "Позаботилась о себе",      type: "happy" },
-  { id: "felt_good", emoji: "✨", label: "Было хорошо между нами",   type: "happy" },
-  { id: "no_contact",emoji: "🤍", label: "Не виделись сегодня",      type: "neutral" },
-  { id: "fight",     emoji: "🌩️", label: "В ссоре",                  type: "neutral2" },
-  { id: "felt_anxiety",emoji:"😶\u200d🌫️",label:"Почувствовала тревогу",  type: "sad" },
-  { id: "yielded",   emoji: "🌊", label: "Уступила себе в ущерб",    type: "sad" },
+  { id: "good_morning", emoji: "🌅", label: "Написал доброе утро",  type: "happy" },
+  { id: "care",         emoji: "💛", label: "Проявил заботу",        type: "happy" },
+  { id: "no_contact",   emoji: "🤍", label: "Не виделись сегодня",   type: "neutral" },
+  { id: "fight",        emoji: "🌩️", label: "В ссоре",               type: "neutral2" },
+  { id: "health_jokes", emoji: "🤒", label: "Шутки про здоровье",    type: "sad" },
+  { id: "grudge",       emoji: "😤", label: "Обиды",                 type: "sad" },
+  { id: "revenge",      emoji: "⚔️", label: "Месть",                 type: "sad" },
 ];
 
 const ENERGY_MSGS = [
@@ -328,8 +327,15 @@ export default function App() {
     ? HABITS.day.filter(h => !CONSULT_IDS.includes(h.id))
     : HABITS[sec];
 
-  const checkedCount = ALL_HABITS.filter(h => checked[h.id]).length;
-  const energyPct    = Math.round((checkedCount / ALL_HABITS.length) * 100);
+  const visibleHabits = [
+    ...HABITS.morning,
+    ...(isOff ? HABITS.day.filter(h => !CONSULT_IDS.includes(h.id)) : HABITS.day),
+    ...HABITS.evening,
+  ];
+  const autoChecked = isOff ? CONSULT_IDS.length : 0;
+  const checkedCount = visibleHabits.filter(h => checked[h.id]).length + autoChecked;
+  const totalCount = visibleHabits.length + autoChecked;
+  const energyPct = Math.round((checkedCount / totalCount) * 100);
   const energyMsg     = [...ENERGY_MSGS].reverse().find(m => energyPct >= m.min);
 
   const handleCheck = (habit) => {
@@ -554,7 +560,6 @@ export default function App() {
                   </div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:700, fontSize:"14px", color: checked[habit.id] ? "#7b2d6e" : cancelled[habit.id] ? "#999" : "#5d3a5a", textDecoration: checked[habit.id] || cancelled[habit.id] ? "line-through" : "none", opacity: checked[habit.id] ? 0.75 : 1 }}>{habit.label}</div>
-                    <div style={{ fontSize:"11px", color:"#b06090", marginTop:"2px" }}>+{habit.energy}% энергии</div>
                   </div>
                   {!checked[habit.id] && !cancelled[habit.id] && (
                     <div onClick={e => openNudge(e, habit)} style={{ fontSize:"11px", color:"#e91e8c", fontWeight:700, background:"rgba(233,30,140,0.1)", padding:"3px 10px", borderRadius:"50px", whiteSpace:"nowrap", cursor:"pointer" }}>уговори меня</div>
