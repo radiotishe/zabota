@@ -3,13 +3,15 @@ import { useState, useEffect } from "react";
 // ── CARE PROCEDURES ──────────────────────────────────────────────────────────
 
 const CARE_PROCEDURES = [
-  { id: "botox",     emoji: "💉", name: "Ботокс",            days: 90 },
-  { id: "laser",     emoji: "✨", name: "Лазерная эпиляция", days: 60 },
-  { id: "period",    emoji: "🌸", name: "Месячные",          days: 28 },
-  { id: "manicure",  emoji: "💅", name: "Маникюр",           days: 14 },
-  { id: "pedicure",  emoji: "🦶", name: "Педикюр",           days: 42 },
-  { id: "massage",   emoji: "💆‍♀️", name: "Массаж",          days: 7  },
-  { id: "yoga_care", emoji: "🧘‍♀️", name: "Йога",           days: 1  },
+  { id: "botox",     emoji: "💉", name: "Ботокс",                    days: 90 },
+  { id: "laser",     emoji: "✨", name: "Лазерная эпиляция",         days: 60 },
+  { id: "period",    emoji: "🌸", name: "Месячные",                  days: 28 },
+  { id: "manicure",  emoji: "💅", name: "Маникюр",                   days: 14 },
+  { id: "pedicure",  emoji: "🦶", name: "Педикюр",                   days: 42 },
+  { id: "massage",   emoji: "💆‍♀️", name: "Массаж",                 days: 7  },
+  { id: "yoga_care", emoji: "🧘‍♀️", name: "Йога",                   days: 1  },
+  { id: "eye_drops", emoji: "👁️", name: "Капли для глаз",           days: 1  },
+  { id: "eye_doctor",emoji: "🔬", name: "Окулист",                   days: 180},
 ];
 
 // ── DATA ────────────────────────────────────────────────────────────────────
@@ -81,6 +83,11 @@ const ENERGY_MSGS = [
 
 const ALL_HABITS = Object.values(HABITS).flat();
 const TOTAL_ENERGY = ALL_HABITS.reduce((s, h) => s + h.energy, 0);
+
+function calcEnergyPct(checked) {
+  const earned = ALL_HABITS.filter(h => checked[h.id]).reduce((s, h) => s + h.energy, 0);
+  return Math.round((earned / TOTAL_ENERGY) * 100);
+}
 
 // ── DATE HELPERS ─────────────────────────────────────────────────────────────
 
@@ -155,7 +162,7 @@ function HistoryView({ onClose }) {
         {keys.length === 0 && <p style={{ color:"#9c5080", textAlign:"center" }}>Пока нет записей 🌱</p>}
         {keys.map(dateKey => {
           const data = JSON.parse(localStorage.getItem("selfcare_" + dateKey) || "{}");
-          const pct = Math.round((ALL_HABITS.filter(h => data.checked?.[h.id]).reduce((s,h) => s+h.energy, 0) / TOTAL_ENERGY) * 100);
+          const pct = Math.round((ALL_HABITS.filter(h => data.checked?.[h.id]).length / ALL_HABITS.length) * 100);
           const markers = MAXIM_MARKERS.filter(m => data.maximMarkers?.[m.id]);
           return (
             <div key={dateKey} style={{ background:"rgba(255,255,255,0.7)", borderRadius:"18px", padding:"16px 18px", marginBottom:"12px", border:"1.5px solid rgba(220,180,220,0.4)" }}>
@@ -321,8 +328,8 @@ export default function App() {
     ? HABITS.day.filter(h => !CONSULT_IDS.includes(h.id))
     : HABITS[sec];
 
-  const earnedEnergy  = ALL_HABITS.filter(h => checked[h.id]).reduce((s, h) => s + h.energy, 0);
-  const energyPct     = Math.round((earnedEnergy / TOTAL_ENERGY) * 100);
+  const checkedCount = ALL_HABITS.filter(h => checked[h.id]).length;
+  const energyPct    = Math.round((checkedCount / ALL_HABITS.length) * 100);
   const energyMsg     = [...ENERGY_MSGS].reverse().find(m => energyPct >= m.min);
 
   const handleCheck = (habit) => {
