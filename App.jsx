@@ -1,5 +1,19 @@
 import { useState, useEffect } from "react";
 
+// ── CARE PROCEDURES ──────────────────────────────────────────────────────────
+
+const CARE_PROCEDURES = [
+  { id: "botox",     emoji: "💉", name: "Ботокс",                    days: 90 },
+  { id: "laser",     emoji: "✨", name: "Лазерная эпиляция",         days: 60 },
+  { id: "period",    emoji: "🌸", name: "Месячные",                  days: 28 },
+  { id: "manicure",  emoji: "💅", name: "Маникюр",                   days: 14 },
+  { id: "pedicure",  emoji: "🦶", name: "Педикюр",                   days: 42 },
+  { id: "massage",   emoji: "💆‍♀️", name: "Массаж",                 days: 7  },
+  { id: "yoga_care", emoji: "🧘‍♀️", name: "Йога",                   days: 1  },
+  { id: "eye_drops", emoji: "👁️", name: "Капли для глаз",           days: 1  },
+  { id: "eye_doctor",emoji: "🔬", name: "Окулист",                   days: 180},
+];
+
 // ── DATA ────────────────────────────────────────────────────────────────────
 
 const HABITS = {
@@ -48,14 +62,13 @@ const SECTIONS = {
 };
 
 const MAXIM_MARKERS = [
-  { id: "was_myself", emoji: "👑", label: "Была собой",              type: "happy" },
-  { id: "boundary",  emoji: "🛡️", label: "Удержала границу",        type: "happy" },
-  { id: "took_care", emoji: "💛", label: "Позаботилась о себе",      type: "happy" },
-  { id: "felt_good", emoji: "✨", label: "Было хорошо между нами",   type: "happy" },
-  { id: "no_contact",emoji: "🤍", label: "Не виделись сегодня",      type: "neutral" },
-  { id: "fight",     emoji: "🌩️", label: "В ссоре",                  type: "neutral2" },
-  { id: "felt_anxiety",emoji:"😶\u200d🌫️",label:"Почувствовала тревогу",  type: "sad" },
-  { id: "yielded",   emoji: "🌊", label: "Уступила себе в ущерб",    type: "sad" },
+  { id: "good_morning", emoji: "🌅", label: "Написал доброе утро",  type: "happy" },
+  { id: "care",         emoji: "💛", label: "Проявил заботу",        type: "happy" },
+  { id: "no_contact",   emoji: "🤍", label: "Не виделись сегодня",   type: "neutral" },
+  { id: "fight",        emoji: "🌩️", label: "В ссоре",               type: "neutral2" },
+  { id: "health_jokes", emoji: "🤒", label: "Шутки про здоровье",    type: "sad" },
+  { id: "grudge",       emoji: "😤", label: "Обиды",                 type: "sad" },
+  { id: "revenge",      emoji: "⚔️", label: "Месть",                 type: "sad" },
 ];
 
 const ENERGY_MSGS = [
@@ -69,6 +82,11 @@ const ENERGY_MSGS = [
 
 const ALL_HABITS = Object.values(HABITS).flat();
 const TOTAL_ENERGY = ALL_HABITS.reduce((s, h) => s + h.energy, 0);
+
+function calcEnergyPct(checked) {
+  const earned = ALL_HABITS.filter(h => checked[h.id]).reduce((s, h) => s + h.energy, 0);
+  return Math.round((earned / TOTAL_ENERGY) * 100);
+}
 
 // ── DATE HELPERS ─────────────────────────────────────────────────────────────
 
@@ -143,7 +161,7 @@ function HistoryView({ onClose }) {
         {keys.length === 0 && <p style={{ color:"#9c5080", textAlign:"center" }}>Пока нет записей 🌱</p>}
         {keys.map(dateKey => {
           const data = JSON.parse(localStorage.getItem("selfcare_" + dateKey) || "{}");
-          const pct = Math.round((ALL_HABITS.filter(h => data.checked?.[h.id]).reduce((s,h) => s+h.energy, 0) / TOTAL_ENERGY) * 100);
+          const pct = Math.round((ALL_HABITS.filter(h => data.checked?.[h.id]).length / ALL_HABITS.length) * 100);
           const markers = MAXIM_MARKERS.filter(m => data.maximMarkers?.[m.id]);
           return (
             <div key={dateKey} style={{ background:"rgba(255,255,255,0.7)", borderRadius:"18px", padding:"16px 18px", marginBottom:"12px", border:"1.5px solid rgba(220,180,220,0.4)" }}>
@@ -160,6 +178,7 @@ function HistoryView({ onClose }) {
                 </div>
               )}
               {data.maximNote && <div style={{ fontSize:"13px", color:"#7b4a9a", fontStyle:"italic", borderTop:"1px solid rgba(220,180,220,0.3)", paddingTop:"6px", marginTop:"6px" }}>📝 {data.maximNote}</div>}
+              {data.isSleepless && <div style={{ fontSize:"12px", color:"#3949ab", marginTop:"4px" }}>🌙 Бессонная ночь</div>}
               {data.diary && <div style={{ fontSize:"13px", color:"#5d3a5a", borderTop:"1px solid rgba(220,180,220,0.3)", paddingTop:"6px", marginTop:"6px" }}>🌙 {data.diary}</div>}
             </div>
           );
@@ -188,6 +207,7 @@ export default function App() {
   const [diarySubmitted, setDiarySubmitted] = useState(false);
   const [section, setSection]           = useState("morning");
   const [isOff, setIsOff]               = useState(false);
+  const [isSleepless, setIsSleepless]   = useState(false);
   const [maximMarkers, setMaximMarkers] = useState({});
   const [maximNote, setMaximNote]       = useState("");
   const [maximHappyNote, setMaximHappyNote] = useState("");
@@ -200,6 +220,9 @@ export default function App() {
   const [showHistory, setShowHistory]   = useState(false);
   const [bankInput, setBankInput]       = useState("");
   const [taskBank, setTaskBank]         = useState([]);
+  const [careDates, setCareDates]       = useState({});
+  const [showPastCare, setShowPastCare] = useState(false);
+  const [pastInputs, setPastInputs]     = useState({});
   const [customHappy, setCustomHappy]   = useState([]);
   const [customSad, setCustomSad]       = useState([]);
   const [happyInput, setHappyInput]     = useState("");
@@ -223,6 +246,7 @@ export default function App() {
           if (s.diary !== undefined)  setDiary(s.diary);
           if (s.diarySubmitted !== undefined) setDiarySubmitted(s.diarySubmitted);
           if (s.isOff !== undefined)  setIsOff(s.isOff);
+          if (s.isSleepless !== undefined) setIsSleepless(s.isSleepless);
           if (s.maximMarkers)         setMaximMarkers(s.maximMarkers);
           if (s.maximNote !== undefined)      setMaximNote(s.maximNote);
           if (s.maximHappyNote !== undefined) setMaximHappyNote(s.maximHappyNote);
@@ -264,6 +288,12 @@ export default function App() {
       setTaskBank(b);
     } catch {}
 
+    // Care dates (persistent)
+    try {
+      const cd = JSON.parse(localStorage.getItem("care_dates") || "{}");
+      setCareDates(cd);
+    } catch {}
+
     // Cycle (persistent)
     const cs = localStorage.getItem("cycle_start");
     if (cs) setCycleStart(cs);
@@ -300,8 +330,15 @@ export default function App() {
     ? HABITS.day.filter(h => !CONSULT_IDS.includes(h.id))
     : HABITS[sec];
 
-  const earnedEnergy  = ALL_HABITS.filter(h => checked[h.id]).reduce((s, h) => s + h.energy, 0);
-  const energyPct     = Math.round((earnedEnergy / TOTAL_ENERGY) * 100);
+  const visibleHabits = [
+    ...HABITS.morning,
+    ...(isOff ? HABITS.day.filter(h => !CONSULT_IDS.includes(h.id)) : HABITS.day),
+    ...HABITS.evening,
+  ];
+  const autoChecked = isOff ? CONSULT_IDS.length : 0;
+  const checkedCount = visibleHabits.filter(h => checked[h.id]).length + autoChecked;
+  const totalCount = visibleHabits.length + autoChecked;
+  const energyPct = Math.round((checkedCount / totalCount) * 100);
   const energyMsg     = [...ENERGY_MSGS].reverse().find(m => energyPct >= m.min);
 
   const handleCheck = (habit) => {
@@ -415,6 +452,12 @@ export default function App() {
       {nudge && <NudgeModal habit={nudge} onConfirm={confirmNudge} onCancel={() => setNudge(null)} onCancelled={confirmCancelled} isConsult={CONSULT_IDS.includes(nudge.id)} />}
       {showHistory && <HistoryView onClose={() => setShowHistory(false)} />}
 
+      {/* кнопка наверх — на всех страницах */}
+      <button onClick={() => window.scrollTo({top:0, behavior:"smooth"})}
+        style={{ position:"fixed", top:"75%", right:"4px", transform:"translateY(-50%)", background:"none", border:"none", color:"#f5eef5", fontSize:"24px", cursor:"pointer", zIndex:50, padding:"8px" }}>
+        ↑
+      </button>
+
       {/* ── HEADER ── */}
       <div style={{ textAlign:"center", padding:"36px 20px 22px", background:"linear-gradient(135deg,#fce4ec,#f3e5f5)", borderBottom:"1.5px solid rgba(233,160,199,0.3)" }}>
 
@@ -460,49 +503,58 @@ export default function App() {
           </div>
         </div>
 
-        <button onClick={() => setShowHistory(true)} style={{ marginTop:"14px", background:"rgba(255,255,255,0.6)", border:"1.5px solid rgba(220,180,220,0.5)", borderRadius:"50px", padding:"7px 18px", color:"#9c5080", fontSize:"13px", fontWeight:700, cursor:"pointer" }}>
-          История
+        <button onClick={() => setTab("today")} style={{ marginTop:"14px", background: tab==="today" ? "linear-gradient(135deg,#e91e8c,#9c27b0)" : "rgba(255,255,255,0.6)", border:"1.5px solid rgba(220,180,220,0.5)", borderRadius:"50px", padding:"10px 32px", color: tab==="today" ? "#fff" : "#9c5080", fontSize:"15px", fontWeight:700, cursor:"pointer", boxShadow: tab==="today" ? "0 4px 16px rgba(233,30,140,0.3)" : "none" }}>
+          🌸 Сегодня
         </button>
       </div>
 
       {/* ── BODY ── */}
       <div style={{ maxWidth:"620px", margin:"0 auto", padding:"24px 16px 120px" }}>
 
-        {/* main tabs */}
+        {/* secondary tabs */}
         <div style={{ display:"flex", gap:"8px", marginBottom:"24px", justifyContent:"center", flexWrap:"wrap" }}>
-          <button onClick={() => setTab("today")}    style={TAB(tab==="today",    "#e91e8c")}>🌸 Сегодня</button>
           <button onClick={() => setTab("tomorrow")} style={TAB(tab==="tomorrow", "#7b2d9e")}>🌙 Завтра</button>
           <button onClick={() => setTab("maxim")}    style={TAB(tab==="maxim",    "#c2185b")}>💛 Максим</button>
+          <button onClick={() => setTab("care")}     style={TAB(tab==="care",     "#26a69a")}>💅 Уход</button>
         </div>
 
         {/* ══════════════ TODAY ══════════════ */}
         {tab === "today" && (
           <>
-            {/* day-off toggle */}
-            <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"18px", background:"rgba(255,255,255,0.7)", borderRadius:"16px", padding:"13px 18px", border:"1.5px solid rgba(220,180,220,0.35)" }}>
-              <span style={{ fontSize:"14px", color:"#6d2b5e", fontWeight:700, flex:1 }}>🏖️ Сегодня у меня выходной</span>
-              <div onClick={() => { setIsOff(!isOff); save({ isOff: !isOff }); }}
-                style={{ width:"48px", height:"26px", borderRadius:"50px", cursor:"pointer", transition:"background 0.3s", background:isOff?"linear-gradient(135deg,#e91e8c,#9c27b0)":"rgba(220,180,210,0.4)", position:"relative" }}>
-                <div style={{ position:"absolute", top:"3px", left:isOff?"24px":"3px", width:"20px", height:"20px", borderRadius:"50%", background:"#fff", transition:"left 0.3s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }} />
-              </div>
-            </div>
-
             {/* section tabs */}
-            <div style={{ display:"flex", gap:"8px", marginBottom:"18px", justifyContent:"center" }}>
+            <div style={{ display:"flex", gap:"0", background:"rgba(255,255,255,0.6)", borderRadius:"16px", overflow:"hidden", border:"1.5px solid rgba(220,180,220,0.3)", marginBottom:"18px" }}>
               {Object.entries(SECTIONS).map(([key, s]) => (
                 <button key={key} onClick={() => setSection(key)} style={{
-                  padding:"9px 14px", borderRadius:"50px", border:"2px solid",
-                  borderColor: section===key ? s.color : "rgba(180,120,180,0.25)",
-                  background: section===key ? s.color : "rgba(255,255,255,0.7)",
-                  color: section===key ? "#fff" : "#9c5080",
-                  fontWeight:700, fontSize:"13px", cursor:"pointer", transition:"all 0.2s",
+                  flex:1, textAlign:"center", padding:"11px 8px", borderBottom:`3px solid ${section===key ? s.color : "transparent"}`,
+                  color: section===key ? s.color : "#9c5080",
+                  fontWeight: section===key ? 700 : 400, fontSize:"13px", cursor:"pointer",
+                  background:"transparent", border:"none", borderBottom:`3px solid ${section===key ? s.color : "transparent"}`,
+                  transition:"all 0.2s",
                 }}>
-                  {s.icon} {s.label} <span style={{ fontSize:"11px", opacity:0.85 }}>{visHabits(key).filter(h => checked[h.id]).length}/{visHabits(key).length}</span>
+                  <div style={{ fontSize:"18px" }}>{s.icon}</div>
+                  <div>{s.label} <span style={{ fontSize:"10px", opacity:0.7 }}>{visHabits(key).filter(h => checked[h.id]).length}/{visHabits(key).length}</span></div>
                 </button>
               ))}
             </div>
 
-            {/* habit tiles */}
+              {section === "morning" && (
+                <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"12px", background:"rgba(255,255,255,0.7)", borderRadius:"16px", padding:"11px 16px", border:"1.5px solid rgba(92,107,192,0.2)" }}>
+                  <span style={{ fontSize:"13px", color:"#3949ab", fontWeight:700, flex:1 }}>🌙 Бессонная ночь</span>
+                  <div onClick={() => { setIsSleepless(!isSleepless); save({ isSleepless: !isSleepless }); }}
+                    style={{ width:"44px", height:"24px", borderRadius:"50px", cursor:"pointer", transition:"background 0.3s", background:isSleepless?"linear-gradient(135deg,#3949ab,#7b1fa2)":"rgba(220,180,210,0.4)", position:"relative", flexShrink:0 }}>
+                    <div style={{ position:"absolute", top:"3px", left:isSleepless?"22px":"3px", width:"18px", height:"18px", borderRadius:"50%", background:"#fff", transition:"left 0.3s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }} />
+                  </div>
+                </div>
+              )}
+              {section === "day" && (
+                <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"12px", background:"rgba(255,255,255,0.7)", borderRadius:"16px", padding:"11px 16px", border:"1.5px solid rgba(220,180,220,0.35)" }}>
+                  <span style={{ fontSize:"13px", color:"#6d2b5e", fontWeight:700, flex:1 }}>🏖️ Сегодня выходной</span>
+                  <div onClick={() => { setIsOff(!isOff); save({ isOff: !isOff }); }}
+                    style={{ width:"44px", height:"24px", borderRadius:"50px", cursor:"pointer", transition:"background 0.3s", background:isOff?"linear-gradient(135deg,#e91e8c,#9c27b0)":"rgba(220,180,210,0.4)", position:"relative", flexShrink:0 }}>
+                    <div style={{ position:"absolute", top:"3px", left:isOff?"22px":"3px", width:"18px", height:"18px", borderRadius:"50%", background:"#fff", transition:"left 0.3s", boxShadow:"0 1px 4px rgba(0,0,0,0.2)" }} />
+                  </div>
+                </div>
+              )}
             <div style={{ display:"grid", gap:"10px", marginBottom:"26px" }}>
               {visHabits(section).map((habit, i) => (
                 <div key={habit.id} onClick={() => handleCheck(habit)} style={{
@@ -520,7 +572,6 @@ export default function App() {
                   </div>
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:700, fontSize:"14px", color: checked[habit.id] ? "#7b2d6e" : cancelled[habit.id] ? "#999" : "#5d3a5a", textDecoration: checked[habit.id] || cancelled[habit.id] ? "line-through" : "none", opacity: checked[habit.id] ? 0.75 : 1 }}>{habit.label}</div>
-                    <div style={{ fontSize:"11px", color:"#b06090", marginTop:"2px" }}>+{habit.energy}% энергии</div>
                   </div>
                   {!checked[habit.id] && !cancelled[habit.id] && (
                     <div onClick={e => openNudge(e, habit)} style={{ fontSize:"11px", color:"#e91e8c", fontWeight:700, background:"rgba(233,30,140,0.1)", padding:"3px 10px", borderRadius:"50px", whiteSpace:"nowrap", cursor:"pointer" }}>уговори меня</div>
@@ -602,9 +653,8 @@ export default function App() {
               <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"16px", color:"#1a237e", marginBottom:"4px", fontWeight:700 }}>📋 Банк задач</div>
               <p style={{ fontSize:"12px", color:"#5c6bc0", marginBottom:"12px", fontStyle:"italic" }}>Всё что висит и ждёт — сюда 🌿</p>
               <div style={{ display:"flex", gap:"8px", marginBottom:taskBank.length?"12px":"0" }}>
-                <input value={bankInput} onChange={e => setBankInput(e.target.value)} onKeyDown={e => e.key==="Enter" && addToBank()} placeholder="Добавить задачу..."
-                  style={{ flex:1, border:"1.5px solid rgba(33,150,243,0.3)", borderRadius:"10px", padding:"9px 12px", fontSize:"13px", color:"#1a237e", background:"rgba(255,250,255,0.9)" }} />
-                <button onClick={addToBank} style={{ background:"linear-gradient(135deg,#1565c0,#673ab7)", border:"none", borderRadius:"10px", width:"38px", color:"#fff", fontSize:"18px", cursor:"pointer", flexShrink:0 }}>+</button>
+                <input value={bankInput} onChange={e => setBankInput(e.target.value)} onKeyDown={e => { if(e.key==="Enter") { addToBank(); } }} placeholder="Добавить задачу и нажать Enter..."
+                  style={{ width:"100%", border:"1.5px solid rgba(33,150,243,0.3)", borderRadius:"10px", padding:"9px 12px", fontSize:"16px", color:"#1a237e", background:"rgba(255,250,255,0.9)" }} />
               </div>
               {taskBank.length > 0 && (
                 <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
@@ -619,7 +669,11 @@ export default function App() {
               )}
             </div>
             {/* backup — скрыто внизу */}
-            <div style={{ marginTop:"32px", paddingTop:"16px", borderTop:"1px solid rgba(220,180,220,0.25)", display:"flex", gap:"8px", justifyContent:"center", opacity:0.45 }}>
+            <div style={{ marginTop:"32px", paddingTop:"16px", borderTop:"1px solid rgba(220,180,220,0.25)", display:"flex", gap:"8px", justifyContent:"center", opacity:0.45, flexWrap:"wrap" }}>
+              <button onClick={() => setShowHistory(true)} style={{ background:"none", border:"none", color:"#b06090", fontSize:"11px", cursor:"pointer" }}>
+                📖 История
+              </button>
+              <span style={{ color:"#d0aac0", fontSize:"11px" }}>·</span>
               <button onClick={exportData} style={{ background:"none", border:"none", color:"#b06090", fontSize:"11px", cursor:"pointer" }}>
                 💾 Скачать данные
               </button>
@@ -694,10 +748,9 @@ export default function App() {
                     <button onClick={() => { const n=customHappy.filter((_,j)=>j!==i); setCustomHappy(n); save({customHappy:n}); }} style={{ background:"none", border:"none", color:"#4caf50", cursor:"pointer", fontSize:"16px", lineHeight:1 }}>×</button>
                   </div>
                 ))}
-                {customHappy.length < 10 && (
-                  <div style={{ display:"flex", gap:"6px", marginTop:"4px" }}>
-                    <input value={happyInput} onChange={e=>setHappyInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&happyInput.trim()){const n=[...customHappy,happyInput.trim()];setCustomHappy(n);save({customHappy:n});setHappyInput("");}}} placeholder="Добавить..." style={{ width:"0", flex:1, minWidth:0, border:"1.5px solid rgba(76,175,80,0.3)", borderRadius:"8px", padding:"6px 8px", fontSize:"12px", color:"#2e7d32", background:"rgba(245,255,245,0.9)" }} />
-                    <button onClick={()=>{if(happyInput.trim()){const n=[...customHappy,happyInput.trim()];setCustomHappy(n);save({customHappy:n});setHappyInput("");}}} style={{ background:"rgba(76,175,80,0.15)", border:"1.5px solid rgba(76,175,80,0.3)", borderRadius:"8px", width:"30px", color:"#2e7d32", fontSize:"18px", cursor:"pointer", flexShrink:0 }}>+</button>
+                {customHappy.length < 5 && (
+                  <div style={{ marginTop:"4px" }}>
+                    <input value={happyInput} onChange={e=>setHappyInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&happyInput.trim()){const n=[...customHappy,happyInput.trim()];setCustomHappy(n);save({customHappy:n});setHappyInput("");}}} placeholder="Добавить и нажать Enter..." style={{ width:"100%", border:"1.5px solid rgba(76,175,80,0.3)", borderRadius:"8px", padding:"6px 10px", fontSize:"16px", color:"#2e7d32", background:"rgba(245,255,245,0.9)" }} />
                   </div>
                 )}
               </div>
@@ -724,10 +777,9 @@ export default function App() {
                     <button onClick={() => { const n=customSad.filter((_,j)=>j!==i); setCustomSad(n); save({customSad:n}); }} style={{ background:"none", border:"none", color:"#d32f2f", cursor:"pointer", fontSize:"16px", lineHeight:1 }}>×</button>
                   </div>
                 ))}
-                {customSad.length < 10 && (
-                  <div style={{ display:"flex", gap:"6px", marginTop:"4px" }}>
-                    <input value={sadInput} onChange={e=>setSadInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&sadInput.trim()){const n=[...customSad,sadInput.trim()];setCustomSad(n);save({customSad:n});setSadInput("");}}} placeholder="Добавить..." style={{ width:"0", flex:1, minWidth:0, border:"1.5px solid rgba(211,47,47,0.3)", borderRadius:"8px", padding:"6px 8px", fontSize:"12px", color:"#b71c1c", background:"rgba(255,250,250,0.9)" }} />
-                    <button onClick={()=>{if(sadInput.trim()){const n=[...customSad,sadInput.trim()];setCustomSad(n);save({customSad:n});setSadInput("");}}} style={{ background:"rgba(211,47,47,0.1)", border:"1.5px solid rgba(211,47,47,0.3)", borderRadius:"8px", width:"30px", color:"#d32f2f", fontSize:"18px", cursor:"pointer", flexShrink:0 }}>+</button>
+                {customSad.length < 5 && (
+                  <div style={{ marginTop:"4px" }}>
+                    <input value={sadInput} onChange={e=>setSadInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&sadInput.trim()){const n=[...customSad,sadInput.trim()];setCustomSad(n);save({customSad:n});setSadInput("");}}} placeholder="Добавить и нажать Enter..." style={{ width:"100%", border:"1.5px solid rgba(211,47,47,0.3)", borderRadius:"8px", padding:"6px 10px", fontSize:"16px", color:"#b71c1c", background:"rgba(255,250,250,0.9)" }} />
                   </div>
                 )}
               </div>
@@ -819,6 +871,74 @@ export default function App() {
                 </div>
               );
             })()}
+          </div>
+        )}
+
+        {/* ══════════════ CARE ══════════════ */}
+        {tab === "care" && (
+          <div style={{ animation:"fadeUp 0.3s both" }}>
+            <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"20px", color:"#6d2b5e", fontWeight:700, textAlign:"center", marginBottom:"20px" }}>💅 Уход за собой</div>
+
+            <div style={{ display:"flex", flexDirection:"column", gap:"10px", marginBottom:"24px" }}>
+              {CARE_PROCEDURES.map(p => {
+                const lastDate = careDates[p.id];
+                const daysSince = lastDate ? Math.floor((new Date() - new Date(lastDate)) / 86400000) : null;
+                const urgent = daysSince !== null && daysSince >= p.days;
+                const soon = daysSince !== null && daysSince >= p.days * 0.85;
+                return (
+                  <div key={p.id} style={{ background:"rgba(255,255,255,0.85)", borderRadius:"18px", padding:"14px 16px", border:`2px solid ${urgent ? "rgba(211,47,47,0.3)" : soon ? "rgba(255,152,0,0.3)" : "rgba(220,180,220,0.3)"}`, display:"flex", alignItems:"center", gap:"12px" }}>
+                    <div style={{ fontSize:"26px", flexShrink:0 }}>{p.emoji}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:700, fontSize:"14px", color:"#5d3a5a" }}>{p.name}</div>
+                      <div style={{ fontSize:"11px", marginTop:"2px", color: daysSince === null ? "#b06090" : urgent ? "#d32f2f" : soon ? "#e65100" : "#2e7d32" }}>
+                        {daysSince === null ? "не указана дата" : urgent ? "⚠️ Пора! · " + daysSince + " дн. назад" : soon ? "🔔 Скоро · " + daysSince + " дн. назад" : "✓ " + daysSince + " дн. назад"}
+                      </div>
+                      {daysSince !== null && (
+                        <div style={{ marginTop:"5px", background:"rgba(220,180,220,0.2)", borderRadius:"50px", height:"4px", overflow:"hidden" }}>
+                          <div style={{ height:"100%", borderRadius:"50px", width:`${Math.min((daysSince/p.days)*100, 100)}%`, background: urgent ? "linear-gradient(90deg,#d32f2f,#e91e8c)" : soon ? "linear-gradient(90deg,#ff9800,#e91e8c)" : "linear-gradient(90deg,#42a5f5,#9c27b0)" }} />
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => {
+                      const next = { ...careDates, [p.id]: localDateKey() };
+                      setCareDates(next);
+                      localStorage.setItem("care_dates", JSON.stringify(next));
+                    }} style={{ background:"linear-gradient(135deg,#e91e8c,#9c27b0)", border:"none", borderRadius:"50px", padding:"9px 14px", color:"#fff", fontSize:"12px", fontWeight:700, cursor:"pointer", flexShrink:0 }}>
+                      Сегодня
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button onClick={() => setShowPastCare(!showPastCare)}
+              style={{ width:"100%", background:"rgba(255,255,255,0.6)", border:"1.5px dashed rgba(180,120,180,0.4)", borderRadius:"16px", padding:"12px", color:"#9c5080", fontSize:"13px", fontWeight:700, cursor:"pointer" }}>
+              {showPastCare ? "▲ Скрыть" : "📅 Внести прошлые даты"}
+            </button>
+
+            {showPastCare && (
+              <div style={{ background:"rgba(255,255,255,0.8)", borderRadius:"18px", padding:"18px", marginTop:"10px", border:"1.5px solid rgba(220,180,220,0.3)" }}>
+                <p style={{ fontSize:"12px", color:"#9c5080", marginBottom:"14px", fontStyle:"italic" }}>Когда в последний раз делала?</p>
+                {CARE_PROCEDURES.map(p => (
+                  <div key={p.id} style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"10px" }}>
+                    <span style={{ fontSize:"18px" }}>{p.emoji}</span>
+                    <span style={{ flex:1, fontSize:"13px", color:"#5d3a5a", fontWeight:700 }}>{p.name}</span>
+                    <input type="date" value={pastInputs[p.id] || careDates[p.id] || ""}
+                      onChange={e => setPastInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
+                      style={{ border:"1.5px solid rgba(220,180,220,0.4)", borderRadius:"10px", padding:"5px 8px", fontSize:"12px", color:"#6d2b5e", background:"rgba(255,250,255,0.9)" }} />
+                  </div>
+                ))}
+                <button onClick={() => {
+                  const next = { ...careDates, ...pastInputs };
+                  setCareDates(next);
+                  localStorage.setItem("care_dates", JSON.stringify(next));
+                  setShowPastCare(false);
+                  setPastInputs({});
+                }} style={{ marginTop:"8px", width:"100%", background:"linear-gradient(135deg,#e91e8c,#9c27b0)", border:"none", borderRadius:"12px", padding:"11px", color:"#fff", fontSize:"14px", fontWeight:700, cursor:"pointer" }}>
+                  Сохранить 💾
+                </button>
+              </div>
+            )}
           </div>
         )}
 
